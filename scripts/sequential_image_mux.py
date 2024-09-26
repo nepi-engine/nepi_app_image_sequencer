@@ -18,8 +18,8 @@ from cv_bridge import CvBridge
 
 from std_msgs.msg import String
 from nepi_edge_sdk_base.save_cfg_if import SaveCfgIF
-from nepi_ros_interfaces.msg import ImageMuxSequence, ImageMuxInput
-from nepi_ros_interfaces.srv import ImageMuxSequenceQuery, ImageMuxSequenceQueryResponse
+from nepi_app_image_sequencer.msg import ImageMuxSequence, ImageMuxInput
+from nepi_app_image_sequencer.srv import ImageMuxSequenceQuery, ImageMuxSequenceQueryResponse
 
 class SequentialImageMux(object):
     DEFAULT_NODE_NAME = 'sequential_image_mux'
