@@ -292,6 +292,6 @@ class SequentialImageMux(object):
 
 
 if __name__ == '__main__':
-	node = SequentialImageMux()
+	SequentialImageMux()
 
 
