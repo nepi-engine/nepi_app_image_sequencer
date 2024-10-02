@@ -9,13 +9,19 @@
 #
 
 APP_NAME = 'Image_Sequencer' # Use in display menus
-DESCRIPTION = 'Application for configuring a single ros topic from multiple sensor or other image sources'
-PKG_NAME = 'nepi_app_image_sequencer'
-APP_FILE = 'sequential_image_mux.py'
-NODE_NAME = 'app_image_sequencer'
-RUI_FILES = ['NepiAppImageSequencer.js']
-RUI_MAIN_FILE = 'NepiAppImageSequencer.js'
-RUI_MAIN_CLASS = "NepiAppImageSequencer"
-RUI_MENU_NAME = "Image Sequencer"
+FILE_TYPE = 'APP'
+APP_DICT = dict(
+    description = 'Application for configuring a single ros topic from multiple sensor or other image sources',
+    pkg_name = 'nepi_app_image_sequencer',
+    config_file = 'app_image_sequencer.yaml',
+    app_file = 'sequential_image_mux.py',
+    node_name = 'app_image_sequencer'
+)
+RUI_DICT = dict(
+    rui_menu_name = 'Image Sequencer', # RUI menu name or "None" if no rui support
+    rui_files = ['NepiAppImageSequencer.js'],
+    rui_main_file ='NepiAppImageSequencer.js',
+    rui_main_class = 'NepiAppImageSequencer'
+)
 
 
