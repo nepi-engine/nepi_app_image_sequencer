@@ -163,7 +163,7 @@ catkin_package(CATKIN_DEPENDS
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   scripts/sequential_image_mux.py
+   scripts/image_sequencer_app_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
@@ -194,13 +194,13 @@ install(DIRECTORY etc/
   USE_SOURCE_PERMISSIONS
 )
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-set( NEPI_APP_LAUNCH_FOLDER 
+set( NEPI_APP_INFO_FOLDER 
   # Must hard-coded 
   /opt/nepi/ros/share/nepi_apps
 )
 
-install(DIRECTORY launch/
-  DESTINATION ${NEPI_APP_LAUNCH_FOLDER}
+install(DIRECTORY info/
+  DESTINATION ${NEPI_APP_INFO_FOLDER}
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)

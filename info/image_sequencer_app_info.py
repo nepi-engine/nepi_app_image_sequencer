@@ -14,7 +14,7 @@ APP_DICT = dict(
     description = 'Application for configuring a single ros topic from multiple sensor or other image sources',
     pkg_name = 'nepi_app_image_sequencer',
     config_file = 'app_image_sequencer.yaml',
-    app_file = 'sequential_image_mux.py',
+    app_file = 'image_sequencer_app_node.py',
     node_name = 'app_image_sequencer'
 )
 RUI_DICT = dict(

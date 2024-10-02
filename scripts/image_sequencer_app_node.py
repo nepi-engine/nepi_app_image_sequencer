@@ -16,20 +16,25 @@ from sensor_msgs.msg import Image
 import cv2 # Must come before cv_bridge on Jetson Ubuntu 20.04 for some reason!
 from cv_bridge import CvBridge
 
+from nepi_edge_sdk_base import nepi_ros
+from nepi_edge_sdk_base import nepi_msg
+
 from std_msgs.msg import String
 from nepi_edge_sdk_base.save_cfg_if import SaveCfgIF
 from nepi_app_image_sequencer.msg import ImageMuxSequence, ImageMuxInput
 from nepi_app_image_sequencer.srv import ImageMuxSequenceQuery, ImageMuxSequenceQueryResponse
 
-class SequentialImageMux(object):
-    DEFAULT_NODE_NAME = 'sequential_image_mux'
-
+class ImageSequencerApp(object):
+    DEFAULT_NODE_NAME = 'image_sequencer_app'
     def __init__(self):
-        # Launch the ROS node
-        rospy.loginfo("Starting " + self.DEFAULT_NODE_NAME)
-        rospy.init_node(self.DEFAULT_NODE_NAME) # Node name could be overridden via remapping
-        self.node_name = rospy.get_name().split('/')[-1]
-        
+        #### APP NODE INIT SETUP ####
+        nepi_ros.init_node(name= self.DEFAULT_NODE_NAME)
+        self.node_name = nepi_ros.get_node_name()
+        self.base_namespace = nepi_ros.get_base_namespace()
+        nepi_msg.createMsgPublishers(self)
+        nepi_msg.publishMsgInfo(self,"Starting Initialization Processes")
+        ##############################
+      
         self.mux_sequences = OrderedDict() # Dictionary of dictionaries, keyed by sequence name
 
         self.save_cfg_if = SaveCfgIF(updateParamsCallback=self.updateToParamServer, paramsModifiedCallback=self.updateFromParamServer)
@@ -40,8 +45,8 @@ class SequentialImageMux(object):
 
         rospy.Service('~mux_sequence_query', ImageMuxSequenceQuery, self.provideMuxSequences)
         
-        rate = rospy.Rate(5)
-        while not rospy.is_shutdown():
+        rate = nepi_ros.rate(5)
+        while not nepi_ros.is_shutdown():
             self.runMuxSequences()
             rate.sleep()
 
@@ -68,17 +73,17 @@ class SequentialImageMux(object):
             mux_seqs[seq_id] = config_seq
 
         # Send the whole thing to the param server
-        rospy.set_param("~mux_sequences", mux_seqs)
+        nepi_ros.set_param(self,"~mux_sequences", mux_seqs)
 
     def updateFromParamServer(self):
-        configured_mux_sequences = rospy.get_param("~mux_sequences", {})
+        configured_mux_sequences = nepi_ros.get_param(self,"~mux_sequences", {})
 
         for seq_id, config_seq in configured_mux_sequences.items():
             self.addUpdateMuxSequenceFromParams(seq_id, config_seq)
 
     def handleConfigureImageMuxSequence(self, msg):
         seq_id = msg.sequence_id
-        rospy.loginfo(self.node_name + ": Adding/modifying sequence " + seq_id + " by request")
+        nepi_msg.publishMsgInfo(self,"Adding/modifying sequence " + seq_id + " by request")
 
         param_seq = {}
         param_seq['enabled'] = msg.enabled
@@ -126,10 +131,10 @@ class SequentialImageMux(object):
     def handleDeleteImageMuxSequece(self, msg):
         seq_id = msg.data
         if seq_id not in self.mux_sequences:
-            rospy.logwarn(self.node_name + ": Request to delete unknown sequence " + seq_id + "... ignoring")
+            nepi_msg.publishMsgWarn(self,"Request to delete unknown sequence " + seq_id + "... ignoring")
             return
         
-        rospy.loginfo(self.node_name + ": Deleting sequence " + seq_id + " by request")
+        nepi_msg.publishMsgInfo(self,"Deleting sequence " + seq_id + " by request")
         # Make sure to unsubscribe everything associated with this sequence first
         self.resetMuxSequence(seq_id, restart_if_enabled = False)
 
@@ -139,14 +144,14 @@ class SequentialImageMux(object):
     def addUpdateMuxSequenceFromParams(self, seq_id, param_seq):
         # First validate this sequence dictionary by checking for required keys
         if ('enabled' not in param_seq) or ('output_topic' not in param_seq) or ('inputs' not in param_seq):
-            rospy.logwarn(self.node_name + ": Invalid mux sequence " + seq_id + " specified... skipping")
+            nepi_msg.publishMsgWarn(self,"Invalid mux sequence " + seq_id + " specified... skipping")
             return
         
         total_frame_count_val = 0
         # Check if updating an existing sequence, and if so, stop it so that we can restart fresh with new params
         if seq_id in self.mux_sequences:
            total_frame_count_val = self.mux_sequences[seq_id]['total_frame_count']
-           rospy.loginfo(self.node_name + ": resetting sequence " +  seq_id + " in order to update it")
+           nepi_msg.publishMsgInfo(self,"resetting sequence " +  seq_id + " in order to update it")
            self.resetMuxSequence(seq_id, restart_if_enabled = False) 
         
         # Now set up/update an entire sequence object here
@@ -164,7 +169,7 @@ class SequentialImageMux(object):
             if ('topic' not in config_input) or \
                 ('min_frame_count' not in config_input) or ('max_frame_count' not in config_input) or \
                 ('min_duration_s' not in config_input) or ('max_duration_s' not in config_input):
-                rospy.logwarn(self.node_name + ": Invalid input definition in config file sequence " + seq_id + " (input " + str(i) + ")... skipping this input") 
+                nepi_msg.publishMsgWarn(self,"Invalid input definition in config file sequence " + seq_id + " (input " + str(i) + ")... skipping this input") 
                 continue
             new_seq['inputs'].append(config_input)
 
@@ -179,7 +184,7 @@ class SequentialImageMux(object):
 
     def resetMuxSequence(self, seq_id, restart_if_enabled):
         if seq_id not in self.mux_sequences:
-            rospy.logwarn(self.node_name + ": cannot reset unknown mux sequence " + seq_id)
+            nepi_msg.publishMsgWarn(self,"cannot reset unknown mux sequence " + seq_id)
             return
 
         seq = self.mux_sequences[seq_id]                
@@ -214,7 +219,7 @@ class SequentialImageMux(object):
             if (seq['enabled'] is False) or (step_count == 0) or ('curr_step' not in seq):
                 continue
 
-            now = rospy.Time.now()
+            now = nepi_ros.time_now()
 
             # Check for sequence step conditions
             take_step = False
@@ -239,8 +244,8 @@ class SequentialImageMux(object):
                 # Reinitialize all counts and timers for the new step
                 seq['curr_step_frame_count'] = 0
                 seq['curr_step_start_time'] = now
-                seq['curr_step_min_stop_time'] = now + rospy.Duration(next_input['min_duration_s'])
-                seq['curr_step_max_stop_time'] = now + rospy.Duration(next_input['max_duration_s'])
+                seq['curr_step_min_stop_time'] = now + nepi_ros.duration(next_input['min_duration_s'])
+                seq['curr_step_max_stop_time'] = now + nepi_ros.duration(next_input['max_duration_s'])
                 seq['curr_step_min_frame_count'] = next_input['min_frame_count']
                 seq['curr_step_max_frame_count'] = next_input['max_frame_count']
 
@@ -252,19 +257,19 @@ class SequentialImageMux(object):
         seq_id = input_args[0]
         step_index = input_args[1]
         if (seq_id not in self.mux_sequences):
-            rospy.logwarn(self.node_name + ": Got invalid sequence id " + seq_id + " in input image callback")
+            nepi_msg.publishMsgWarn(self,"Got invalid sequence id " + seq_id + " in input image callback")
             return
 
         seq = self.mux_sequences[seq_id]
         if (seq['enabled'] is False):
-            rospy.logwarn(self.node_name + " Got sequence id for disabled sequence " + seq_id + " in input image callback")
+            nepi_msg.publishMsgWarn(self,"Got sequence id for disabled sequence " + seq_id + " in input image callback")
             return
         
         if seq['curr_step'] != step_index:
             return # This is typical -- just means we aren't on the associated step currently
         
         if seq['output_pub'] is None:
-            rospy.logwarn_throttle(5.0, self.node_name + " Publiser for sequence " + seq_id + " is not defined... skipping image processing")
+            nepi_msg.printMsgWarnThrottle(5.0, self.node_name + " Publiser for sequence " + seq_id + " is not defined... skipping image processing")
             return
         
         # Process the input image into the correct output size
@@ -280,7 +285,7 @@ class SequentialImageMux(object):
         ros_img.header.seq = seq['total_frame_count']
 
         # Debugging
-        #rospy.logwarn("Debugging: Input hdr = " + str(msg.header) + "\nOutput hdr = " + str(ros_img.header))
+        #nepi_msg.publishMsgWarn(self,"Debugging: Input hdr = " + str(msg.header) + "\nOutput hdr = " + str(ros_img.header))
         
         # Publish it -- double check that publisher is still active, since it can be closed asynchronously during image conversion
         if seq['output_pub'] is not None:
@@ -292,6 +297,6 @@ class SequentialImageMux(object):
 
 
 if __name__ == '__main__':
-	SequentialImageMux()
+	ImageSequencerApp()
 
 
