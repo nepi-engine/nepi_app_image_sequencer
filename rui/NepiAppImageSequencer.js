@@ -14,7 +14,6 @@ import Section from "./Section"
 import { Columns, Column } from "./Columns"
 import CameraViewer from "./CameraViewer"
 import ListBox, {IndexedListBox} from './ListBox'
-import BooleanIndicator from "./BooleanIndicator"
 import './ListBox.css'
 import Label from './Label'
 import Input from './Input'
