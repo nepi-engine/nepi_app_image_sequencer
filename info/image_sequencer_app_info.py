@@ -13,6 +13,7 @@ FILE_TYPE = 'APP'
 APP_DICT = dict(
     description = 'Application for configuring a single ros topic from multiple sensor or other image sources',
     pkg_name = 'nepi_app_image_sequencer',
+    group_name = 'IMAGING',
     config_file = 'app_image_sequencer.yaml',
     app_file = 'image_sequencer_app_node.py',
     node_name = 'app_image_sequencer'
