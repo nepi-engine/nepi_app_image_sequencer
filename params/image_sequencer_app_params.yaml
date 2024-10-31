@@ -1,0 +1,14 @@
+APP_DICT:
+  description: Application for configuring a single ros topic from multiple sensor
+    or other image sources
+  pkg_name: nepi_app_image_sequencer
+  group_name: IMAGING
+  config_file: app_image_sequencer.yaml
+  app_file: image_sequencer_app_node.py
+  node_name: app_image_sequencer
+RUI_DICT:
+  rui_menu_name: Image Sequencer
+  rui_files:
+  - NepiAppImageSequencer.js
+  rui_main_file: NepiAppImageSequencer.js
+  rui_main_class: NepiAppImageSequencer
