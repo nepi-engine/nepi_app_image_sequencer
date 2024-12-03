@@ -330,10 +330,15 @@ class NepiAppImageSequencer extends Component {
     await this.props.ros.callMuxSequenceQuery(false)
 
     // Reset flags and deselect any selected image so that displayed imagery reverts to the output
-    this.setState({selectedSequenceModified: false,
-                   addingNewSequence: false,
-                   selectedInputImageIndex: null
-                   })
+    this.setState({
+                  selectedSequenceModified: false
+                  })
+    this.setState({
+                  addingNewSequence: false
+                  })
+    this.setState({
+                  selectedInputImageIndex: null
+                  })
 
     const  ids = [ "min_duration_s", "max_duration_s", "min_frame_count", "max_frame_count",
                    "output_topic", "output_img_width_pixels", "output_img_height_pixels", "sequence_id",
@@ -672,6 +677,7 @@ class NepiAppImageSequencer extends Component {
               </Section>
             : null
             }
+            
           </Column>
         </Columns>
        </Column>
